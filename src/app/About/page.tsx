@@ -36,7 +36,7 @@ export default function AboutPage() {
           </p>
           <p>
             새로운 기술을 배우고 적용하는 것을 좋아하며, 특히 사용자 중심의 개발 방법론에 관심이 많습니다. <br />
-            개발하면서 겪은 경험과 학습한 내용을 이 블로그를 통해 공유하고자 합니다.
+            개발하면서 겪은 경험과 학습한 내용을 기록하며 기억하고자 블로그를 만들게 되었습니다.
           </p>
         </div>
       </section>
@@ -82,7 +82,7 @@ export default function AboutPage() {
 
       {/* 관심사 */}
       <section className="space-y-4">
-        <h3 className="text-2xl font-bold">🎯 관심사</h3>
+        <h3 className="text-2xl font-bold">🎯 취미</h3>
         <ul className="list-disc list-inside space-y-1 text-gray-700">
           <li>매일 5키로 러닝</li>
           <li>해외축구 시청</li>

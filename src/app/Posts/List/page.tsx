@@ -1,82 +1,66 @@
-import Button from "@/app/components/Button";
-import { Metadata } from "next";
-import Link from "next/link";
+'use client'
 
-export const metadata: Metadata = {
-  title: 'Blog List',
-  description: '블로그 목록 페이지 입니다.'
-}
+import Button from "@/app/components/Button";
+import { Post } from "@/app/types/post";
+import { getPosts } from "@/app/utils/posts";
+// import { Metadata } from "next";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+// export const metadata: Metadata = {
+//   title: 'Blog List',
+//   description: '블로그 목록 페이지 입니다.'
+// }
 
 export default function BlogListPage(){
-  const blogPosts = [
-    {
-      id: 1,
-      title: "Next.js로 블로그 구축하기",
-      excerpt: "Next.js의 App Router를 활용하여 SEO 친화적인 블로그를 만드는 방법을 알아봅니다.",
-      category: "Next.js",
-      date: "2025-07-03",
-      author: "ychanwoo",
-      readTime: "5분"
-    },
-    {
-      id: 2,
-      title: "TypeScript 타입 시스템 완벽 가이드",
-      excerpt: "TypeScript의 고급 타입 기능을 활용하여 더 안전하고 유지보수하기 쉬운 코드를 작성하는 방법을 알아봅니다.",
-      category: "TypeScript",
-      date: "2025-06-28",
-      author: "ychanwoo",
-      readTime: "8분"
-    },
-    {
-      id: 3,
-      title: "React 성능 최적화 기법",
-      excerpt: "React 애플리케이션에서 발생할 수 있는 성능 병목 현상을 해결하고 렌더링 성능을 향상시키는 방법을 알아봅니다.",
-      category: "React",
-      date: "2025-06-20",
-      author: "ychanwoo",
-      readTime: "6분"
-    },
-    {
-      id: 4,
-      title: "CSS Grid 레이아웃 마스터하기",
-      excerpt: "모던 웹 레이아웃을 위한 CSS Grid의 모든 것. 복잡한 레이아웃도 간단하게 구현해봅시다.",
-      category: "HTML/CSS",
-      date: "2025-06-15",
-      author: "ychanwoo",
-      readTime: "4분"
-    }
-  ];
+  const [blogPosts, setBlogPosts] = useState<Post[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+
+  useEffect(() => {
+    const posts = getPosts();
+    setBlogPosts(posts);
+  },[])
+
+  // 카테고리별 필터링
+  const filteredPosts = selectedCategory === 'ALL' ? blogPosts : blogPosts.filter(post => post.category === selectedCategory);
+  const categories = ['ALL', ...Array.from(new Set(blogPosts.map(post => post.category)))];
+  
   return(
-    <>
-      <h1>Blog Lists</h1>
-      {/* New Post Button */}
-      <div>
-        <Button href="/Posts/New">새 글 작성</Button>
+    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">블로그 목록</h1>
+        <Button href="/Posts/New" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">새 글 작성</Button>
       </div>
 
       {/* category */}
-      <div>
-        <h2>Category</h2>
-        <div>
-          <button>ALL</button>
-          <button>HTML/CSS</button>
-          <button>TypeScript</button>
-          <button>React</button>
-          <button>Next.js</button>
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold text-gray-700 mb-3">카테고리</h2>
+        <div className="flex flex-wrap gap-2">
+          {categories.map(category => (
+            <button key={category} onClick={() => setSelectedCategory(category)} className={`px-4 py-2 rouded-lg transition-color ${
+              selectedCategory === category ? 'bg-blue-600 text-white' : 'bg-blue-100 hover:bg-gray-200'
+            }`}>
+              {category}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Blog Lists */}
-      <div>
-          {blogPosts.map(post => (
-            <Link href={`/Posts/List`} key={post.id}>
-              <div>
-                <span>{post.category}</span>
-                <span>{post.title}</span>
+      <div className="mt-8 space-y-4">
+          {filteredPosts.map(post => (
+            <Link href={`/Posts/List/${post.id}`} key={post.id} className="block transition-all hover:scale-[1.01] duration-200">
+              <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100 hover:shadow-lg">
+                <div className="flex flex-col gap-2">
+                  <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full w-fit">{post.category}</span>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">{post.title}</h3>
+                  <p className="text-gray-600 line-clamp-2">{post.excerpt}</p>
+                  <span className="flex items-center justify-between mt-4 text-gray-500 text-sm">ychanwoo</span>
+                </div>
               </div>
             </Link> 
           ))}
       </div>
-    </>
+    </div>
   )
 }
