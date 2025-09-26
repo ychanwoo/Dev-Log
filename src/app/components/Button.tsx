@@ -9,10 +9,19 @@ interface BtnLinkText {
   onClick?: () => void;
 }
 
-export default function Button({children, href, className, type, disabled, onClick}: BtnLinkText){
-  return(
+export default function Button({
+  children,
+  href,
+  className,
+  type,
+  disabled,
+  onClick,
+}: BtnLinkText) {
+  return (
     <button className={className} disabled={disabled} onClick={onClick}>
-      <Link type={type} href={href}>{children}</Link>
+      <Link type={type} href={href}>
+        {children}
+      </Link>
     </button>
-  )
+  );
 }
