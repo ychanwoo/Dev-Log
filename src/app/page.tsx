@@ -146,7 +146,7 @@ export default function RootPage() {
       <div className="bg-[#E9E6E1] min-h-[95vh] w-full rounded-b-[10%] border-b border-[#4D4E57] flex flex-col items-center justify-center">
         <h1 className="text-6xl font-extralight mb-20">Projects Archive</h1>
         <section className="flex gap-x-10">
-          <div className="bg-[#BAAD78] rounded-[15%] min-h-[40vh] max-w-[40vh] min-w-[40vh] p-7 content-center">
+          <div className="bg-[#BAAD78] rounded-[15%] lg:w-95 lg:h-95 p-7 content-center">
             <h2 className="text-2xl font-extralight mt-5">Hobbism</h2>
             <p className="mt-10 font-extralight">
               A playground for hobby enthusiasts, bringing community and
@@ -163,11 +163,11 @@ export default function RootPage() {
               </Link>
             </div>
           </div>
-          <div className="bg-[#BAAD78] rounded-[15%] min-h-[40vh] max-w-[40vh] min-w-[40vh] p-7 flex flex-col items-center justify-center">
+          <div className="bg-[#BAAD78] rounded-[15%] lg:w-95 lg:h-95 p-7 flex flex-col items-center justify-center">
             <h2 className="text-2xl font-extralight mb-4">Coming Soon</h2>
             <Lock size={48} strokeWidth={1} />
           </div>
-          <div className="bg-[#BAAD78] rounded-[15%] min-h-[40vh] max-w-[40vh] min-w-[40vh] p-7 flex flex-col items-center justify-center">
+          <div className="bg-[#BAAD78] rounded-[15%] lg:w-95 lg:h-95 p-7 flex flex-col items-center justify-center">
             <h2 className="text-2xl font-extralight mb-4">Coming Soon</h2>
             <Lock size={48} strokeWidth={1} />
           </div>
