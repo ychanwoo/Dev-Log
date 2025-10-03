@@ -1,0 +1,55 @@
+---
+title: "렌더링 정리"
+date: "2025-09-30"
+tags: ["Next.js"]
+image: "/about.jpg"
+---
+
+## 렌더링
+
+- 리액트 컴포넌트를 호출해서 HTML 코드를 만드는 작업
+- 컴포넌트가 렌더링 되는 위치에 따라 클라이언트 컴포넌트와 서버 컴포넌트로 분류됨
+- React는 기본적으로 CSR 기반, Next.js는 SSR + CSR 모두 활용
+
+### 클라이언트 컴포넌트
+
+- 웹 브라우저가 요청 헤더와 바디를 만들어 서버에 `HTTP` 요청을 보냄
+- 서버에서 먼저 실행된 후 결과와 컴포넌트(HTML) 자체를 클라이언트로 전송
+
+### 서버 컴포넌트
+
+- 클라이언트의 요청을 분석하고 결과를 HTML로 응답
+- Next.js `app` 라우터는 기본적으로 서버 컴포넌트
+
+---
+
+## 렌더링 방식
+
+| React         | Next.js               |
+| ------------- | --------------------- |
+| UI 라이브러리 | 풀스택 프레임워크     |
+| CSR           | CSR + SSR + RSC + ISR |
+
+### CSR
+
+```tsx
+const { content: mdxContent } = await compileMDX({
+  source: content,
+  options: {
+    mdxOptions: {
+      remarkPlugins: [remarkGfm],
+    },
+  },
+  components: {
+    h2: (props) => <h2 className="text-2xl font-bold mt-6 mb-3" {...props} />,
+    p: (props) => <p className="leading-relaxed text-gray-700" {...props} />,
+    code: (props) => <code className="bg-gray-100 px-1 rounded" {...props} />,
+    table: (props) => (
+      <table
+        className="table-auto border-collapse border border-gray-300 my-4"
+        {...props}
+      />
+    ),
+  },
+});
+```
