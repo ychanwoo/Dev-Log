@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { BadgePlus, CircleFadingArrowUp, Goal, Lock } from "lucide-react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 //* contact 버튼 클릭 시 맨 아래로 이동
 export default function RootPage() {
@@ -57,7 +58,7 @@ export default function RootPage() {
             className="h-full"
           />
         </div>
-        <div className="w-1/2 relative self-center mx-auto">
+        <div className="w-1/2 relative self-center mx-auto my-10">
           <h1 className="text-5xl font-extralight mb-10">About</h1>
           <p className="text-2xl font-extralight mb-5">Introduce</p>
           <p className="mb-10">
@@ -66,39 +67,74 @@ export default function RootPage() {
             windows. He looked up from his book and stretched, feeling a little
             tired. At that moment, his phone buzzed with a new message.
           </p>
-          <p className="text-2xl font-extralight mb-5">Stack</p>
+
           {/* 기술 스택 */}
+          <p className="text-2xl font-extralight mb-5">Stack</p>
           <section className="space-y-4">
             <h4 className="font-bold">Frontend</h4>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-x-4 gap-y-10">
               {[
-                "JavaScript",
-                "TypeScript",
-                "React",
-                "Next.js",
-                "HTML/CSS",
-                "Tailwind CSS",
-                "Git",
-                "Node.js",
-                "Figma",
+                { name: "HTML", img: "/tech/html.png" },
+                { name: "CSS", img: "/tech/css.png" },
+                { name: "TailwindCSS", img: "/tech/tailwindcss.png" },
+                { name: "JavaScript", img: "/tech/javascript.png" },
+                { name: "TypeScript", img: "/tech/typescript.png" },
+                { name: "React", img: "/tech/react.png" },
+                { name: "Next.js", img: "/tech/nextjs.png" },
               ].map((tech) => (
-                <div
-                  key={tech}
-                  className="px-4 py-2 border rounded-lg shadow-sm text-center text-gray-700 hover:bg-[#dddad4] transition"
+                <motion.div
+                  key={tech.name}
+                  layout
+                  whileHover={{
+                    scale: 1.1,
+                    transition: { type: "spring", stiffness: 300, damping: 20 },
+                  }}
+                  className="group hover:w-44 w-30 h-20 border rounded-lg shadow-sm text-center text-white bg-[#cfcfcf] hover:bg-[#939089] transition flex flex-col justify-center items-center"
                 >
-                  <span>{tech}</span>
-                </div>
+                  <div className="flex items-center">
+                    <Image
+                      src={tech.img}
+                      alt={`${tech.name}-icon`}
+                      width={50}
+                      height={50}
+                    />
+                    <span className="hidden group-hover:block transition-opacity ml-5">
+                      {tech.name}
+                    </span>
+                  </div>
+                </motion.div>
               ))}
             </div>
-            <h4 className="font-bold">Data Science</h4>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {["Python", "Numpy", "Pandas", "R"].map((tech) => (
-                <div
-                  key={tech}
-                  className="px-4 py-2 border rounded-lg shadow-sm text-center text-gray-700 hover:bg-[#dddad4] transition"
+
+            <h4 className="font-bold pt-5">Data Science</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {[
+                { name: "Python", img: "/tech/python.png" },
+                { name: "Pandas", img: "/tech/pandas.png" },
+                { name: "Numpy", img: "/tech/numpy.png" },
+                { name: "R", img: "/tech/r.png" },
+              ].map((tech) => (
+                <motion.div
+                  key={tech.name}
+                  layout
+                  whileHover={{
+                    scale: 1.1,
+                    transition: { type: "spring", stiffness: 300, damping: 20 },
+                  }}
+                  className="group hover:w-44 w-30 h-20 border rounded-lg shadow-sm text-center text-white bg-[#cfcfcf] hover:bg-[#939089] transition flex flex-col justify-center items-center"
                 >
-                  <span>{tech}</span>
-                </div>
+                  <div className="flex items-center">
+                    <Image
+                      src={tech.img}
+                      alt={`${tech.name}-icon`}
+                      width={40}
+                      height={40}
+                    />
+                    <span className="hidden group-hover:block transition-opacity ml-5">
+                      {tech.name}
+                    </span>
+                  </div>
+                </motion.div>
               ))}
             </div>
           </section>
