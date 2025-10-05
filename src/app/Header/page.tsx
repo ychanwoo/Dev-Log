@@ -75,25 +75,43 @@ export default function HeaderPage() {
               </div>
               {/* filter 목록 */}
               <div className="pt-1.5 space-x-5">
-                <button className="relative after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:w-full after:h-[2px] after:bg-[#545454] after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100">
+                <Link
+                  href="/posts"
+                  className="relative after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:w-full after:h-[2px] after:bg-[#545454] after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100"
+                >
                   All
-                </button>
-                <button className="relative after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:w-full after:h-[2px] after:bg-[#545454] after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100">
+                </Link>
+                <Link
+                  href="/posts?tag=HTML/CSS"
+                  className="relative after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:w-full after:h-[2px] after:bg-[#545454] after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100"
+                >
                   HTML/CSS
-                </button>
-                <button className="relative after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:w-full after:h-[2px] after:bg-[#545454] after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100">
+                </Link>
+                <Link
+                  href="/posts?tag=TypeScript"
+                  className="relative after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:w-full after:h-[2px] after:bg-[#545454] after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100"
+                >
+                  TypeScript
+                </Link>
+                <Link
+                  href="/posts?tag=React"
+                  className="relative after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:w-full after:h-[2px] after:bg-[#545454] after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100"
+                >
                   React
-                </button>
-                <button className="relative after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:w-full after:h-[2px] after:bg-[#545454] after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100">
+                </Link>
+                <Link
+                  href="/posts?tag=Next.js"
+                  className="relative after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:w-full after:h-[2px] after:bg-[#545454] after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100"
+                >
                   Next.js
-                </button>
+                </Link>
               </div>
               {/* 프로젝트 및 DevLog 버튼 */}
               <div className="pr-3 flex space-x-5 ml-auto">
                 <button
                   disabled={true}
                   onClick={handleScrollToProjects}
-                  className="text-gray-500 text-sm hover:underline"
+                  className="text-gray-500 text-sm cursor-not-allowed"
                 >
                   Projects
                 </button>
