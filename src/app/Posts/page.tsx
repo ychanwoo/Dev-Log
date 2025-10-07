@@ -34,6 +34,11 @@ export default async function DevLogPage({
     } as Post;
   });
 
+  // * 작성일 기준으로 정렬 (내림차순)
+  allPosts.sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
   // * filter 기능
   const selectedTag = params.tag;
   const filteredPosts = selectedTag
