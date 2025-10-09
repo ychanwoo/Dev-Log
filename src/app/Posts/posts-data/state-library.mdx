@@ -1,0 +1,445 @@
+---
+title: "상태 관리 라이브러리"
+date: "2025-10-09"
+tags: ["React"]
+image: "/thumbnails/state-library.jpg"
+---
+
+## 상태 관리 라이브러리 (Redux, Jotai, Zustand)
+
+### 전역 상태 관리 (global state)
+
+React는 `useState`와 `useReducer` 훅을 사용하여 컴포넌트의 상태를 관리할 수 있음
+상태가 변경되면 해당 컴포넌트가 다시 렌더링되어 화면이 업데이트 됨
+이때, `useState`와 `useReducer`는 컴포넌트 내부 상태만 관리하기에 다른 컴포넌트와 공유할 수 없음
+
+전역 상태 관리를 직접 구현하고 관리하기 어렵기 때문에 라이브러리를 사용함
+(`Redux`, `Recoil`, `Context API` ,`Zustand` 등)
+
+**사용 예시**
+
+- 로그인 여부와 사용자 정보 (인증 상태 관리)
+- 다크 모드, 언어와 같은 설정
+- 장바구니 관리
+- 앱 전역에서 알림/메시지 관리 (읽지 않은 알림 수)
+- 회원가입이나 주문서에서 각 단계 입력 상태 저장 (멀티스탭 폼 데이터)
+
+---
+
+### Redux
+
+JavaScript 애플리케이션의 상태를 관리하기 위해 보통 React와 함께 사용하지만 JavaScript에서도 사용 가능하며, 컴포넌트 간 상태를 공유하는 역할을 하는 라이브러리임
+
+**설치 코드**
+
+```bash
+npm i redux react-redux
+```
+
+**흐름 설명**
+
+**Action 생성**
+
+- 상태 변경을 요청하는 신호 역할
+
+**Dispatch**
+
+- `store`에 `action`을 전달
+
+**Reducer**
+
+- 현재 상태와 액션을 바탕으로 새 상태를 만듦
+- 상태 변경 로직을 처리하는 순수함수
+
+**Store 업데이트 및 알림**
+
+- 상태를 한 곳에서 관리하는 저장소
+- 상태가 바뀌면 구독 중인 UI(리액트 컴포넌트 등)에 알림
+- **Redux 흐름도**
+
+  ```bash
+  [컴포넌트 이벤트 발생]
+         ↓
+  [action 생성]
+         ↓
+  dispatch(action)
+         ↓
+  Redux Store가 action을 reducer에 넘김
+         ↓
+  reducer가 action 처리
+         ↓
+  새로운 상태(state) 반환
+         ↓
+  store가 상태 저장
+         ↓
+  useSelector가 store에 저장된 상태 감지
+         ↓
+  컴포넌트 리렌더링
+
+  ```
+
+  ```tsx
+  // 1. 이벤트 발생 → dispatch
+  <button onClick={() => dispatch(increment())}>+1</button>;
+
+  // 2. action 생성
+  const increment = () => ({ type: "INCREMENT" });
+
+  // 3. reducer 처리
+  function counterReducer(state = 0, action) {
+    switch (action.type) {
+      case "INCREMENT":
+        return state + 1;
+      default:
+        return state;
+    }
+  }
+
+  // 4. useSelector로 상태 감지
+  const count = useSelector((state) => state.counter);
+  ```
+
+---
+
+**Action 예제 코드**
+
+- `step`을 받아서 `{ type: 'countUp', payload: { step: 2 } }` 이러한 형태의 `action`객체를 반환함
+
+```tsx
+export const COUNTER_ACTION = {
+  // action의 type을 지정함
+  UP: "countUp",
+  DOWN: "countDown",
+  RESET: "countReset",
+};
+
+// Store에 전달할 액션을 생성해서 반환
+// Store에서 다시 Reducer로 전달
+// action 예시 { type: 'countUp', payload: { step: 2 } }
+const counterActionCreator = {
+  // action 객체를 생성해줌
+  // 소괄호를 작성하여 JSON 표기법의 중괄호 라는 걸 표현 (객체를 리턴함)
+  countUp: (step: number) => ({ type: COUNTER_ACTION.UP, payload: { step } }),
+  countDown: (step: number) => ({
+    type: COUNTER_ACTION.DOWN,
+    payload: { step },
+  }),
+  countReset: () => ({ type: COUNTER_ACTION.RESET }),
+};
+export default counterActionCreator;
+```
+
+**Reducer 예제 코드**
+
+```tsx
+import { COUNTER_ACTION } from "@redux/counterActionCreator";
+
+// 초기 상태
+const initialState = {
+  count: 5,
+};
+
+interface CounterAction {
+  type: string;
+  payload: { step: number };
+}
+
+// 상태와 액션을 전달 받아서 작업을 수행한 후 변경된 상태를 반환하는 순수함수
+// 상태가 복합 객체일 경우 immer 같은 라이브러리 사용해서 불변성 유지
+const counterReducer = (state = initialState, action: CounterAction) => {
+  switch (action.type) {
+    case COUNTER_ACTION.UP:
+      // state.count += action.payload.step; 불변성 X
+      return {
+        ...state,
+        count: state.count + action.payload.step,
+      };
+    case COUNTER_ACTION.DOWN:
+      return {
+        ...state,
+        count: state.count - action.payload.step,
+      };
+    case COUNTER_ACTION.RESET:
+      return {
+        ...state,
+        count: 0,
+      };
+    default:
+      return state;
+  }
+};
+export default counterReducer;
+```
+
+**Store 예제 코드**
+
+- `reducer`가 `action`을 처리한 새로운 상태를 `store`가 저장함
+
+```tsx
+// redux에서는 redux-toolkit 사용을 권장 (configureStore 권장)
+import { ~~createStore~~ } from "redux";
+import counterReducer from "./couterReducer";
+
+const store = ~~createStore~~(counterReducer);
+
+export default store;
+```
+
+**Redux 상태 값 조회 및 액션 디스패치**
+
+```tsx
+// Redux store에서 count 값 가져오기
+const count = useSelector((state: { count: number }) => state.count);
+```
+
+- `store`가 저장한 상태를 `useSelector`가 감지함
+- `state.count` 값을 가져와 `count` 변수에 저장함
+
+```tsx
+const dispatch = useDispatch();
+dispatch(counterActionCreator.countUp(3)); // store에서 온 함수
+// counterActionCreator.countUp(3)은 action임 (reducer가 처리)
+```
+
+- `useDispatch` 훅은 `action`을 `store`로 보내기 위한 `dispatch` 함수를 가져옴
+- 이 함수를 이용해 상태 변경을 유도할 수 있음
+- `dispatch()`를 통해서 `action`객체가 `store`로 전달됨
+
+---
+
+### Redux Toolkit
+
+- Redux의 복잡성을 줄이고 보일러 플레이트 코드로 작성할 수 있도록 도와주는 라이브러리로
+  `Immer` 라이브러리를 기본적으로 사용하여 불변성 관리를 쉽게 처리해주고, `configureStore`, `createSlice`와 같은 편리한 API를 제공함
+
+**설치 코드**
+
+```bash
+npm i @reduxjs/toolkit
+```
+
+**`createSlice`로 Action과 Reducer 한 번에 정의**
+
+- `counterSlice.reducer` → Reducer 함수
+- `counterSlice.actions` → `countUp`, `countDown`, `countReset` Action 생성자
+- 내부적으로 `immer`가 적용되어 `state.count += 1`처럼 수정해도 불변성은 유지됨
+
+```tsx
+import { createSlice } from "@reduxjs/toolkit";
+
+// 리듀서와 액션 생성자를 간단하게 정의
+// 반환값 { reducer, actions, caseReducers }
+// reducer: 리듀서 함수, Redux 스토어에 전달해야 함
+// actions: 각 리듀서에 해당하는 액션 생성자 객체
+// caseReducers: 슬라이스 내부에서 정의된 리듀서 객체
+const counterSlice = createSlice({
+  name: "myCounter", // 슬라이스 이름(액션 타입의 접두사로 사용됨)
+  initialState: { count: 10 }, // 초기 상태
+  reducers: {
+    // 기존 reducer의 switch문 대신 사용 -> store에 넘겨줌
+    countUp: (state, action) => {
+      // immer 라이브러리를 내부적으로 사용하기 때문에 속성을 직접 수정해도 됨
+      state.count += action.payload;
+    },
+    countDown: (state, action) => {
+      state.count -= action.payload;
+    },
+    countReset: (state) => {
+      state.count = 0;
+    },
+  },
+});
+
+console.log(counterSlice);
+console.log(counterSlice.actions.countUp(1));
+
+export const { countUp, countDown, countReset } = counterSlice.actions; // 액션 생성자
+export default counterSlice;
+```
+
+**`configureStore`로 Store 생성**
+
+- RTK에서는 `configureStore()`로 간단하게 Store 생성 가능
+- 슬라이스 별로 `reducer`를 등록하여 `state.counterStore.count`형태로 접근함
+
+```tsx
+import { configureStore } from "@reduxjs/toolkit";
+import counterSlice from "@/RTK/counterSlice";
+
+const store = configureStore({
+  reducer: {
+    counterStore: counterSlice.reducer,
+  },
+});
+
+// Redux 스토어의 state를 나타내는 타입(counterSlice에 지정한 initialState의 타입)
+// useSelector()에서 사용할 전체 상태 타입을 추론하기 위해 만듦
+export type RootState = ReturnType<typeof store.getState>;
+
+export default store;
+```
+
+**Redux Toolkit에서 상태 값 조회 및 액션 디스패치**
+
+```tsx
+//RTK store에서 count 값 가져오기
+const count = useSelector((state: RootState) => state.counterStore.count);
+```
+
+- `useSelector`는 `Redux store`의 상태를 구독해서 가져오는 훅임
+- `RootState`는 보통 `store`에서 생성한 루트 `reducer`의 타입임
+  (예: `export type RootState = ReturnType<typeof store.getState>`)
+- `state.counterStore.count`는 `slice`이름이 `counterStore`이고 그 안에 `count` 상태가 있다는 뜻
+- RTK에서는 `slice` 단위로 상태가 나뉘기 때문에 `state.슬라이스이름.속성` 구조를 사용해 접근함
+
+```tsx
+const dispatch = useDispatch();
+```
+
+- `dispatch`는 상태를 변경하는 `action`을 `store`에 전달하는 함수임
+- 예를 들어, `counterSlice`에서 `increment`라는 액션이 있다면 아래 코드와 같이 사용할 수 있음
+
+```tsx
+dispatch(increment());
+```
+
+---
+
+## Jotai
+
+- `Recoil`의 아이디어를 계승하여 만들어진 상태 관리 라이브러리로, 더 가볍고 단순한 구조를 가지며, `key`가 필요없고 `Provider`도 선택적으로 사용 가능
+- `atom`(작은 상태 단위) → 상태를 정의하는데 사용되며, 상태의 일부를 나타냄
+- `useAtom`, `useSetAtom`, `useAtomValue`훅으로 상태를 읽거나 변경할 수 있으며, `key`가 필요없고, `Provider`는 선택사항임 (기본 `Provider`가 제공됨)
+
+**설치 코드**
+
+```bash
+npm i jotai
+```
+
+**공식 문서 참고 📄**
+
+[Jotai, primitive and flexible state management for React](https://jotai.org/)
+
+### atom
+
+- 상태의 가장 작은 단위
+
+**`atom`을 따로 분리해야 되는 이유?**
+
+- 상태 변경 로직을 컴포넌트에서 분리하여 재사용성과 유지보수성을 높이고, 읽기 없이 쓰기만 가능한 `Write-only Atom`으로 성능 최적화도 가능하기 때문임
+
+```jsx
+export const countDownAtom = atom(null, (get, set, step: number) => {
+  const count = get(countAtom);
+  set(countAtom, count - step);
+});
+```
+
+### useAtom
+
+- `useState`처럼 상태를 읽거나 쓰는 동작이 다 가능함 ( 컴포넌트가 상태를 구독하여 상태가 바뀌면 리렌더링 됨)
+
+```tsx
+// useState처럼 getter, setter 모두 사용 (구독)
+const [count, setCount] = useAtom(countAtom);
+const countUp = (step: number) => {
+  setCount(count + step);
+};
+```
+
+### useAtomValue
+
+- 읽기 전용 상태의 값으로 사용함 (`setter`는 필요 없고 값만 필요할 때)
+- 컴포넌트는 상태를 구독하지만, `setter`함수는 받지 않음
+
+```tsx
+const count = useAtomValue(countAtom);
+```
+
+### useSetAtom
+
+- `setter`만 사용함 (값은 보지않고, 상태만 변경할 때 사용함) → 불필요한 리렌더링 방지
+
+```tsx
+// setter만 사용 (구독하지 않음)
+const setCount = useSetAtom(countAtom);
+const countUp = (step: number) => {
+  setCount((count) => count + step);
+};
+```
+
+---
+
+### Write-only / Read-only Atom
+
+**Read-Write Atom**
+
+```tsx
+// Read-write atom
+export const countAtom = atom(6); // 상태 하나를 정의
+```
+
+**접근 시**
+
+```tsx
+// 읽기 쓰기 전부
+const [count, setCount] = useAtom(countAtom);
+setCount(count + 1);
+
+// 읽기만
+const count = useAtomValue(countAtom); // 값만 읽음
+
+// 쓰기만
+const setCount = useSetAtom(countAtom);
+setCount((prev) => prev + 1); // 이전 값 기반으로 업데이트
+```
+
+---
+
+**Read-only Atom**
+
+- 값을 가져오는 용도로만 사용됨
+- `get` : atom의 값을 읽을 때 사용
+- `set` : atom의 값을 변경할 때 사용 (`Read-only`에서는 X)
+
+```tsx
+// Read-only atom
+const countAtom = atom(6);
+export const getCountAtom = atom(
+  (get) => get(countAtom) // read 함수
+  // () => {} // write 함수를 지정하지 않으면 읽기 전용
+);
+```
+
+**접근 시**
+
+```tsx
+const count = useAtomValue(getCountAtom);
+```
+
+---
+
+**Write-only Atom**
+
+- 외부에서 `atom`을 사용할 땐 쓰기 전용이므로 `useSetAtom`으로만 접근 가능
+
+```tsx
+// Write-only atom
+export const countDownAtom = atom(
+  null, // read 함수 - null일 경우 "읽기 불가능"
+  (get, set, step: number) => {
+    const count = get(countAtom);
+    set(countAtom, count - step);
+  } // write 함수
+);
+```
+
+**접근 시**
+
+```tsx
+const setCountDown = useSetAtom(countDownAtom);
+<button onClick={() => setCountDown(1)}>count 감소</button>;
+```
+
+---

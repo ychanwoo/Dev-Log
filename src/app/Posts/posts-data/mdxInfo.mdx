@@ -1,0 +1,176 @@
+---
+title: "MDX"
+date: "2025-10-09"
+tags: ["Next.js"]
+image: "/thumbnails/mdxInfo.webp"
+---
+
+### MDX란?
+
+- `Markdown` + `JSX`가 결합된 단어로 `Markdown`의 문법안에 `JSX`(`TSX`)문법을 직접 사용할 수있는 확장된 포맷으로 `Markdown` 문법 안에 `React` 컴포넌트를 넣을 수 있음
+
+**MDX를 사용하는 이유?**
+
+- 블로그나 여러 문서를 작성할 때 `Markdown`의 간편함을 유지하면서, 필요 시 `React` 컴포넌트로 사용 가능하기 때문
+
+### Next.js에서 동작 방식
+
+1. `Next-mdx-remote`
+   - `Next.js`에서 `MDX`를 다루기 위한 라이브러리
+   - 서버에서 `.mdx`파일을 읽어 `compileMDX`로 파싱하여 `ReactNode`로 변환
+   - `Next.js` 13 이전 버전에서는 `<MDXRemote />`를 사용 해야 됐지만, 13 이후 버전에서는 `compileMDX`로 바로 받아서 사용 가능함
+
+**라이브러리 설치 명령어**
+
+```bash
+npm install next-mdx-remote
+```
+
+---
+
+### `remark` & `rehype` 플러그인
+
+- `remark` : HTML 구조로 바꿔주는 단계
+- `rehype` : HTML 구조에서 최종 `ReactNode` 렌더링 단계에서 가공
+
+**라이브러리 설치 명령어**
+
+**remark**
+
+```bash
+npm install remark remark-gfm
+```
+
+**rehype**
+
+```bash
+npm install rehype-prism-plus prismjs
+```
+
+**예시**
+
+```jsx
+import rehypePrism from "rehype-prism-plus";
+
+const { content: mdxContent } = await compileMDX({
+  source: content,
+  options: {
+    mdxOptions: {
+      remarkPlugins: [remarkGfm], // GitHub Flavored Markdown 지원 (표, 체크박스, 취소선 등)
+      rehypePlugins: [rehypePrism], // 코드블럭 하이라이팅
+    },
+  },
+});
+```
+
+---
+
+### 스타일 적용
+
+- `prose`를 통해
+- `@tailwindcss/typography` 플러그인 사용 시, `Markdown`으로 만들어진 태그에 자동으로 스타일에 기본 스타일이 적용됨
+
+**예시 코드**
+
+```jsx
+<article className="prose">{mdxContent}</article>
+```
+
+### **Prism 테마**
+
+- 코드 하이라이팅 전용 라이브러리
+
+**라이브러리 설치 명령어**
+
+```tsx
+npm install rehype-prism-plus prismjs
+```
+
+**global.css 추가**
+
+```tsx
+@import "prismjs/themes/prism-tomorrow.css";
+```
+
+---
+
+### gray-matter
+
+- `title`, `date`, `tag`와 같은 메타데이터와 본문 내용을 분리해줌
+- `.mdx` 파일의 frontmatter(맨 위의 `---` 구간) 데이터를 읽을 수 있음
+
+**라이브러리 설치 명령어**
+
+```bash
+npm install gray-matter
+```
+
+**예시**
+
+```markdown
+---
+title: "렌더링 정리"
+date: "2025-09-30"
+tags: ["next.js"]
+---
+
+## 본문 시작
+
+### this is markdown
+
+- one
+- two
+- trhee
+```
+
+---
+
+### MDX 방식 선택 기준
+
+1. **Loader 방식 (`@next/mdx` / `@mdx-js/loader`)**
+
+- 글 몇 개만 쓰고, 그냥 `.mdx`를 `import` 해서 바로 쓰고 싶을 때 주로 사용
+
+**특징**
+
+- 코드가 제일 간단함
+- 예) `import Post from './post.mdx'` 가능
+- ESM export (`export const meta`)도 바로 쓸 수 있음
+
+**단점**
+
+- 블로그처럼 수십 개 글 관리엔 불편
+- 빌드 타임에 다 포함돼서 동적 로딩이 어려움
+
+---
+
+1. **Remote 방식 (`next-mdx-remote` / `compileMDX`)**
+
+- 블로그/문서 처럼 글이 많고, `slug` 기반 라우팅 하고 싶을 때 주로 사용
+
+**특징**
+
+- `fs`로 파일 읽어서 `SSR`/`ISR`에 딱 맞음
+- `frontmatter` + `gray-matter`로 메타데이터 관리 편리
+- 동적으로 `params.slug` 받아 페이지 생성 가능
+
+**단점**
+
+- 코드가 살짝 더 김
+- 설정 필요 (`remark`, `rehype` 등)
+
+---
+
+### Frame motion
+
+**라이브러리 설치 명령어**
+
+```bash
+npm install motion
+```
+
+**import**
+
+```jsx
+import { motion } from "motion/react";
+```

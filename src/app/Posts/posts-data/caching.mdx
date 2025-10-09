@@ -1,0 +1,109 @@
+---
+title: "Caching"
+date: "2025-10-09"
+tags: ["Next.js"]
+image: "/thumbnails/caching.png"
+---
+
+### 캐싱
+
+- `Next.js`는 성능 최적화를 위해 4가지 주요 캐싱 매커니즘을 제공함
+- 14버전 까지는 `fetch`를 사용하면 캐 시가 기본동작이었으나, 15버전 부터는 기본적으로 캐시가 적용이 안되어 `fetch`를 사용할 때 `{cache: 'force-cache'}`를 적용해줘야 캐시(`Data Cache`)가 됨
+
+```tsx
+// 기본으로 캐시됨 (Next.js 14)
+const res = await fetch("https://expamle.app/market/posts");
+
+// Next.js 15에서는 명시적 설정 필요
+const res = await fetch("https://expamle.app/market/posts", {
+  cache: "force-cache",
+});
+```
+
+### Data Cache
+
+- 클라이언트가 `fetch` 또는 외부 API를 서버 컴포넌트에서 호출할 때, 동일한 데이터 요청이라면 호출
+  결과를 개별 데이터 단위로 캐시하여 빠르게 응답함
+- `Request Memoization`은 짧은 시간동안 중복 `fetch`를 방지하는 메모리 기반의 기본적인 캐시 기능이며, 주로 동일 요청이 동시에 여러 번 발생할 때 효과가 있음
+- `Memoization`에 캐시가 되지 않거나, 장기적인 캐시가 필요하면 `Data Cache`로 넘어감
+
+```tsx
+if (data.ok) {
+  // 응답 완료 시
+  // revalidatePath('/posts');
+  revalidateTag("list"); // 목록만 갱신
+  redirect("/posts"); // 페이지 이동
+}
+```
+
+- `redirect` : 요청 후 다른 페이지로 이동
+- `revalidatePath` : 전체 페이지 캐시 무효화
+- `revalidateTag` : 지정한 태그가 붙은 캐시만 무효화
+
+```tsx
+const res = await fetch(`https://example.app/market/posts?type=qna`, {
+  headers: {
+    "Client-Id": "openmarket",
+  },
+  next: {
+    tags: ["list", "qna"],
+    revalidate: 10, // 10초 후에 자동으로 revalidate
+  },
+  cache: "force-cache",
+});
+```
+
+**Data Cache와 Request Memoization의 차이점?**
+
+- `Memoization`은 자동으로 캐시 되지만, 동일한 호출이 발생하기 전 까지만 유효함
+- `Data Cache`는 일정 기간동안 재사용 가능하도록 캐시됨 (`revalidate`옵션을 통해 설정 가능)
+- `Data Cache`는 파일 시스템에 저장되지만, `Memoization`은 메모리에 저장됨
+
+```tsx
+// 메모이제이션 적용 (자동)
+const res1 = await fetch("https://example.api/data");
+const res2 = await fetch("https://example.api/data");
+// 거의 동시에 호출되면 실제 네트워크 요청은 1번만 (메모이제이션)
+
+// Data Cache 적용 (직접 설정)
+const res = await fetch("https://example.api/data", {
+  cache: "force-cache",
+  next: {
+    tags: ["list", "qna"],
+    revalidate: 10, // 10초 동안 동일 요청은 네트워크 호출 없이 캐시된 데이터 반환
+  },
+});
+```
+
+### Full Route Cache
+
+- 서버 측에서 렌더링된 HTML 페이지 전체를 캐싱하는 방식
+- `SSG`, `ISR` 같은 정적 페이지에 주로 사용하며, 빠른 API 응답을 제공함
+
+### Router Cache
+
+- 클라이언트 라우터 캐시로 페이지 간 이동시 `Next.js` 라우터가 이전에 방문한 페이지의 `RSC Payload`를 메모리하여 보관함으로서, 브라우저 간의 이동을 빠르게 해줌
+
+---
+
+### 이미지 최적화
+
+- 자동으로 이미지 최적화 기능을 갖춘 `Image` 컴포넌트
+
+**크기 최적화**
+
+- 각각의 디바이스에 맞는 크기의 이미지를 자동으로 제공함 (`Webp`, `AVIF`같은 현대 이미지 포맷 사용)
+
+**시각적 안정성**
+
+- 이미지 로딩 시 발생하는 레이아웃 이동 현상 방지 (`width`, `height` 속성 필수)
+
+**더 빠른 페이지 로드**
+
+- 이미지가 뷰포트에 들어올 때 로드하며, 선택적인 `blurDataURL`속성으로 블러 이미지 지정
+  → `blur`이미지는 `placeholder`라이브러리나 다른 도루를 이용해서 `base64`방식으로 지정
+
+**정적 컨텐츠**
+
+- `public` 폴더 아래 위치하면 자동으로 최적화 되고, 코드에서 `'/'`로 접근
+- 이미지, 폰트, 아이콘 최적화

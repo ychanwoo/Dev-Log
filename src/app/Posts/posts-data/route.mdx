@@ -1,0 +1,225 @@
+---
+title: "라우터 규칙"
+date: "2025-10-04"
+tags: [Next.js]
+image: "/nature.webp"
+---
+
+### Next.js란?
+
+- `React` 기반의 풀스택 웹 애플리케이션을 구축하기 위한 프레임워크로 소프트웨어 개발에
+  필요한 공통 구조와 기능을 제공하고 개발 방식이나 프로젝트 구조는 자유도가 낮지만, 제공되는
+  공통 기능을 활용하면 개발 생산성이 향상됨
+
+**특징**
+
+- 파일 시스템 기반의 라우터 제공
+  - 페이지 라우터 : 기존 방식의 라우터
+  - 앱 라우터: 서버 컴포넌트, 스트리밍 등 최신 React기능 제공
+- 클라이언트 사이드 렌더링(`CSR`), 서버 사이드 렌더링(`SSR`) 지원
+- `next/image` 컴포넌트를 통한 이미지 자동 최적화 및 `lazy-loading` 제공
+- 페이지 단위로 코드가 분리되어 불필요한 JS 로딩을 방지하여 성능 최적화
+- TypeScript 우선 환경 제공 (기본 내장, 설정 간단)
+
+### React의 단점
+
+- `Lazing Loading` 직접 구현 → 초기 로딩이 느림
+- `SEO` 어려움 (빈 HTML로 응답하기 때문에 검색엔진이 컨텐츠를 읽을 수 없음)
+- 자체 라우터가 없고, `react-router-dom`등 외부 라이브러리 사용이 필요함
+- 상태 공유를 위해 `Context`, `Redux`, `Zustand`등 도구 필요
+
+### Next.js의 장점
+
+- 서버 사이드 렌더링(`SSR`)로 초기 로딩 속도 개선
+- `SEO` 최적화 (서버에서 완성한 HTML로 검색 엔진이 바로 읽을 수 있음)
+- 파일 시스템 기반 자동 라우팅 (pages, app폴더 구조만으로 라우팅 자동 생성)
+- 자동 코드 분할 및 성능 최적화 (페이지 별 자동 분할, 이미지/폰트 최적화 내장)
+- 풀스택 개발 지원 (`API Routes`로 백엔드 까지 구현 가능)
+
+**공식 문서 참고 📃**
+
+[Next.js by Vercel - The React Framework](https://nextjs.org/)
+
+**Next.js 패키지 설치 명령어**
+
+```bash
+# React기반이기에 React까지 설치 해줘야 함
+npm install next@latest react@latest react-dom@latest
+npx create-next-app@latest # 프로젝트 생성
+```
+
+---
+
+**UI관련 라이브러리 사이트 🖥️**
+
+[Build your Component Library - shadcn/ui](https://ui.shadcn.com/)
+
+---
+
+### app 라우터 규칙
+
+- `app`폴더 하위에 존재하는 파일이나 폴더 규칙
+
+**특수 파일**
+
+- `layout.tsx` : 동일 폴더와 하위 폴더 페이지의 레이아웃 정의
+- `page.tsx` : 페이지 UI
+- `loading.tsx` : 페이지 로딩 중에 표시되는 UI
+- `not-fount.tsx` : 404 오류 페이지
+- `error.tsx` : Page의 오류를 처리
+- `global-error.tsx` : Root Layout에서 발생하는 오류 처리
+- `route.ts` : API 엔드포인트 정의
+- `template.tsx` : 페이지 템플릿 정의
+- `default.tsx` : 대체 UI
+
+**중첩 라우팅**
+
+```bash
+app/
+  └── dashboard/
+        ├── layout.tsx
+        ├── page.tsx
+        └── analytics/
+              └── page.tsx
+```
+
+- `/dashboard`는 `dashboard/page.tsx`
+- `/dashboard/analytics`는 `analytics/page.tsx`를 의미하고,
+  `dashboard/layout.tsx`가 둘 다 감쌈
+
+---
+
+### MetaData
+
+**정적 메타데이터 설정**
+
+- 페이지 빌드 시 변하지 않는 고정 메타정보를 설정할 수 있음(`Home`, `About`, `Login` 페이지에 적합)
+- 객체 리터럴 형태이며 빌드 시 실행됨
+
+```tsx
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Home",
+  description: "Home 페이지 입니다.",
+};
+```
+
+---
+
+### generateMetadata
+
+**동적 메타데이터 설정**
+
+- 데이터에 따라 동적으로 생성됨(`게시판 상세 페이지`, `블로그 포스트`등에 적합)
+- 비동기 함수 형태이며 페이지 요청 시 실행됨
+
+```jsx
+import { Metadata } from "next";
+// generateMetadata가 비동기 함수이기에 Promise를 반환함
+export async function generateMetadata(): Promise<Metadata> {
+  const data = {
+    title: `1번 게시물`,
+    content: "게시판 이용 수칙입니다.",
+  };
+
+  return {
+    title: data.title,
+    description: data.content,
+  };
+}
+```
+
+**비동기 함수로 만들어야 되는 이유?**
+
+- `generateMetadata()`는 페이지가 렌더링되기 전에 실행되는 함수이며, 동적 데이터를 불러와
+  메타데이터 설정을 할 수 있어야 되기 때문에 `await`을 쓰려면 `async`를 붙여야 되고 반환 타입도
+  `Promise`가 됨
+
+---
+
+### use client
+
+- 해당 파일(컴포넌트)를 클라이언트 컴포넌트로 강제 지정하는 선언임
+
+**클라이언트 컴포넌트란?**
+
+- 브라우저 환경에서 실행되는 컴포넌트
+
+**클라이언트 컴포넌트로 강제 지정하는 이유?**
+
+- `Next.js` `App Router`는 기본적으로 모든 컴포넌트를 서버 컴포넌트(Server Component)로 처리하지만, `React State`, `Side Effect`, `API 사용`, `이벤트 핸들링` 등의 기능들이 필요한 경우 클라이언트 컴포넌트(Client Component)로 만들어야됨
+
+```tsx
+"use client"; // 필요 시 코드 맨 윗줄에 선언
+```
+
+### use server
+
+- 서버에서 실행되는 함수를 클라이언트 컴포넌트에서 안전하게 호출하도록 도와주는 기능으로,
+  서버 전용 작업(`DB` 접근 등)을 클라이언트에서 직접 실행하는 대신, 서버 함수(액션)으로 분리해서 호출
+
+```tsx
+"use server"; // 필요 시 코드 맨 윗줄에 선언
+```
+
+---
+
+### error.tsx
+
+- 컴포넌트 렌더링 시 에러가 발생하면 `error` 파일에서 에러 처리 및 에러 UI를 보여줌
+- `<ErrorBoundary>`에 감싸진 것 처럼 동작하며, 페이지 전체가 아닌 해당 경로에서 발생한
+  에러만 부분 처리함
+
+```bash
+app/
+ ㅣ--dashboard/
+		ㅣ--page.tsx
+		ㅣ--error.tsx # 이 경로에서 발생한 에러 처리
+```
+
+**예시 코드**
+
+```tsx
+"use client";
+
+export default function Error({ error }: { error: Error }) {
+  return (
+    <div>
+      <h2>에러 발생</h2>
+      <p>{error.message}</p>
+      <Link href="/">다시 시도하기</Link>
+    </div>
+  );
+}
+```
+
+### not-found.tsx
+
+- 해당 경로에 대한 데이터가 없거나 존재하지 않을 때 보여줄 사용자 정의 `404`에러 페이지
+
+```bash
+app/
+ ㅣ--blog/
+	    ㅣ--[slug]/
+			      ㅣ--not-found.tsx # 이 경로에 존재하지 않는 slug 접근 시 사용
+
+```
+
+**사용 예시**
+
+```tsx
+import Link from "next/link";
+
+export default function NotFound() {
+  return (
+    <div>
+      <div>
+        <h1>404</h1>
+        <h2>This is not the web page you are looking for.</h2>
+        <Link href="/">GO HOME</Link>
+      </div>
+    </div>
+  );
+}
+```
