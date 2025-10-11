@@ -13,11 +13,13 @@ export default function DevLogPageTagName({ post }: Props) {
   return (
     <span
       className={clsx(
-        "bg-amber-100 py-1 px-2 rounded-full text-xs",
+        "py-1 px-2 rounded-full text-xs",
         tagName === "React" && "bg-blue-400",
         tagName === "TypeScript" && "bg-sky-300",
         tagName === "HTML/CSS" && "bg-green-300",
-        tagName === "Next.js" && "bg-amber-100"
+        tagName === "Next.js" && "bg-amber-100",
+        !["React", "TypeScript", "HTML/CSS", "Next.js"].includes(tagName) &&
+          "bg-gray-300"
       )}
     >
       {tagName}
