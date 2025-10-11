@@ -1,0 +1,249 @@
+---
+title: "React Query"
+date: "2025-10-11"
+tags: ["React"]
+image: "/thumbnails/react-query.jpg"
+---
+
+### React Query(TanStack Query) 라이브러리
+
+- React에서 Axios 같은 비동기 데이터 처리 작업을 쉽게 하기 위해 지원하는 라이브러리로,
+  서버에서 데이터를 불러오고, 캐시하며, 자동 갱신 등의 작업을 `useState`, `useEffect`없이 깔끔하게 처리할 수 있음
+
+```bash
+npm i @tanstack/react-query
+npm i @tanstack/react-query-devtools
+# 두 가지를 동시에 설치하고 싶을 땐 아래 코드로 설치하면 됨
+npm i @tanstack/react-query @tanstack/react-query-devtools
+```
+
+**공식 문서 참고 📄**
+[TanStack Query](https://tanstack.com/query/latest)
+
+---
+
+### 주요 개념 요약
+
+| 종류                    | 훅                                        | 설명                                    |
+| ----------------------- | ----------------------------------------- | --------------------------------------- |
+| 조회(GET)               | **useQuery**                              | 서버에서 데이터를 가져오고, 캐시에 저장 |
+| 변경(POST, PUT, DELETE) | **useMutation**                           | 서버의 데이터를 수정할 때 사용          |
+| 전역 클라이언트         | **QueryClient** / **QueryClientProvider** | 전체 앱에 React Query 기능 제공         |
+| 개발 도구               | **ReactQueryDevtools**                    | 요청, 응답, 캐시 상태 등을 확인         |
+
+---
+
+### useQuery
+
+- **useQuery란?**
+  서버의 데이터를 조회할 때 사용하며, 응답 받은 데이터는 캐시되며, 다음번 요청 시 서버에 요청하지 않고 캐시된 데이터를 반환함 (캐시가 유효하면 재요청 없이 반환됨)
+
+**React Query 기본 설정**
+
+```tsx
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App.tsx";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
+const queryClient = new QueryClient(); // 클라이언트를 생성함
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <App />
+      <ReactQueryDevtools />
+    </QueryClientProvider>
+  </StrictMode>
+);
+```
+
+- **QueryClientProvider** : 전체 앱에서 React Query 기능을 사용 가능하도록 함
+  - **client**는 생성한 클라이언트를 **props**로 넘김
+- **ReactQueryDevtools** : **devtools**에서 요청 및 캐시 상태를 확인할 수 있음
+
+**Options**
+
+- **queryKey** : 캐시 식별자 역할로, 배열 형태로 작성 / 첫 요소는 코정 키, 그 뒤는 동적 파라미터
+- **queryFn** : 실제 서버에 데이터를 요청하는 함수로, **axios.get**이나 **fetch**등 가능
+- **select** : 응답에서 필요한 부분만 추출하는 전처리 함수 ex) **res.data.item**만 가져오기
+- **retry** : 실패 시 자동 재시도 횟수 ( 기본값 3)
+- **refetchOnWindowFocus** : 다른 탭이나 앱 갔다가 돌아올 때 자동 재요청 여부 ( 기본값 **true**)
+- **staleTime** : 데이터를 최신 상태로 유지하는 시간( 시간이 지나면 오래된 상태로 판단하여 다시 새로운 요청을 준비함)
+- **refetchInterval** : 설정한 주기마다 자동으로 데이터를 새로 받아옴
+
+```tsx
+import { useQuery } from "@tanstack/react-query";
+
+const axios = useAxiosInstance();
+
+const { data, isLoading, error } = useQuery({
+  queryKey: ["posts", 1, "replies"],
+  queryFn: () =>
+    axios.get("/posts/1/replies", {
+      params: {
+        delay: 1000,
+      },
+    }),
+  select: (response: { data: ReplyListResType }) => response.data.item,
+  retry: 3,
+  refetchOnWindowFocus: true,
+  staleTime: 1000 * 5,
+  refetchInterval: 1000 * 3,
+});
+```
+
+---
+
+### useMutation
+
+- 서버의 데이터를 변경할 때 사용 이벤트 내에서 사용해야 함 (**POST**, **PUT**, **PATCH**, **DELETE**)
+
+**Options**
+
+- **mutate** : 이벤트 핸들러 내부에서 **mutate**를 호출하면 **mutationFn**이 호출되면서 실제 비동기 요청이 발생함
+- **mutationFn** : 실제 비동기 요청 함수로, **axios**의 POST/PUT
+- **onSuccess** : 요청 성공 시 실행할 콜백 (상태 초기화, 새로고침 등..)
+- **queryClient.invalidateQueries** : 해당 쿼리 키의 데이터를 강제로 **refetch**하도록 트리거 (데이터를 다시 불러올 수 있도록 신호를 줌)
+
+```tsx
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+const queryClient = useQueryClient();
+const { mutate, isPending } = useMutation({
+  mutationFn: (formData: FormData) => axios.post("/posts/1/replies", formData),
+  onSuccess() {
+    setContent("");
+    // 댓글 등록 후 댓글 목록 갱신
+    queryClient.invalidateQueries({ queryKey: ["posts", 1, "replies"] });
+  },
+});
+
+const handleAddComment = (event: React.FormEvent<HTMLFormElement>) => {
+  // 중복 요청 방지
+  event.preventDefault(); // 폼 제출 방지
+  const formData = new FormData(event.currentTarget);
+  mutate(formData); // 댓글 등록 요청
+};
+
+return (
+  <>
+    <h4>댓글 등록</h4>
+    <form onSubmit={handleAddComment}>
+      <textarea
+        value={content}
+        name="content"
+        onChange={(e) => setContent(e.target.value)}
+        rows={3}
+        cols={30}
+        placeholder="댓글 내용"
+      />
+      <br />
+      <button type="submit" disabled={isPending}>
+        등록
+      </button>
+    </form>
+  </>
+); // button태그에 disabled={isPendig}을 추가하여 중복 등록을 방지함
+```
+
+### useQueryClient
+
+- React 전체에서 사용하는 **QueryClient** 인스턴스를 가져오는 훅으로, 내부적으로 모든 캐시, 상태 관리, 요청 처리등을 통제하는 역할을 함
+- **useMutation**은 자체적으로 캐시를 저장하지 않기 때문에, **useQueryClient**를 통해 **invalidateQueries**, **setQueryData** 같은 메서드를 사용하여 관련 쿼리의 캐시를 갱신할 수 있음
+
+```tsx
+const queryClient = useQueryClient();
+// 댓글을 새로 달았으니 1번 게시글의 댓글 목록만 다시 가져오게 하는 처리
+queryClient.invalidateQueries({ queryKey: ["posts", 1, "replies"] });
+```
+
+### invalidateQueries
+
+- 무효화 라는 뜻으로 특정 **queryKey**에 해당하는 데이터를 **stale**(오래된) 상태로 만든다는 의미
+- 해당 **queryKey**에 대한 캐시 데이터를 **stale**로 설정하여 컴포넌트가 마운트, 포커스, 리렌더링 되면 자동으로 재요청 하도록 함
+- 다른 기능을 하는 함수들로는 `removeQueries()`(캐시 삭제), `cancelQueries()`(진행 중인 요청 취소), `refetchQueries()`(캐시 무시하고 재요청), `getQueryData()`(캐시에서 현재 데이터를 가져옴), `setQueryData()`(캐시에 수동으로 데이터를 설정) 등이 있음
+
+---
+
+### **useInfiniteQuery**
+
+- React Query에서 **무한 스크롤**이나 **페이지네이션** 기능을 쉽게 구현할 수 있게 도와주는 훅 ( **페이지네이션**(**pagination**)은 많은 양의 데이터를 한 번에 다 보여주지 않고, 여러 페이지로 나눠서 조금씩 보여주는 방법을 말함)
+
+**기능**
+
+**페이지 단위 데이터 요청**
+
+- 스크롤이 내려가거나 ‘더 보기’ 버튼을 눌렀을 때 다음 페이지 데이터를 자동으로 불러옴
+
+**데이터 캐싱 및 관리**
+
+- 각 페이지별 데이터를 **data.pages** 배열에 저장해서 관리함
+
+**이전/다음 페이지 처리**
+
+- **getNextPageParam**, **getPreviousPageParam** 옵션으로 다음 페이지와 이전 페이지의 파라미터를 지정할 수 있음
+
+```jsx
+const {
+  // 파라미터
+  data, // 불러온 데이터 (페이지별로 분리된 배열)
+  fetchNextPage, // 다음 페이지 데이터를 불러오는 함수
+  fetchPreviousPage, // 이전 페이지 데이터를 불러오는 함수
+  hasNextPage, // 다음 페이지 존재 여부 (true/false)
+  hasPreviousPage, // 이전 페이지 존재 여부 (true/false)
+  isFetchingNextPage, // 다음 페이지가 데이터를 불러오는 중인지 여부
+  isFetchingPreviousPage, // 이전 페이지가 데이터를 불러오는 중인지 여부
+  promise, // 현재 쿼리의 Promise객체 (비동기 작업 상태)
+  ...result // 나머지 결과 값들 (에러, 로딩, 상태 등)
+} = useInfiniteQuery({
+  queryKey, // 쿼리의 고유 식별자 (캐싱, 갱신 등에 사용됨)
+  queryFn: ({ pageParam }) => fetchPage(pageParam), // 데이터 불러오는 함수
+  initialPageParam: 1, // 첫 페이지를 1로 설정
+  ...options, // 나머지 선택 옵션들
+  // 다음 페이지의 파라미터를 어떻게 구할지 정의 (없으면 undefined)
+  getNextPageParam: (lastPage, allPages, lastPageParam, allPageParams) =>
+    lastPage.nextCursor,
+  // 이전 페이지의 파라미터를 어떻게 구할지 정의 (없으면 undefined)
+  getPreviousPageParam: (firstPage, allPages, firstPageParam, allPageParams) =>
+    firstPage.prevCursor,
+});
+```
+
+**Options**
+
+- **queryKey** : 쿼리를 구분하는 고유 키 ( 배열 형태가 일반적임)
+- **queryFn** : 데이터를 불러오는 함수 (**pageParam**)을 받아 페이지별 요청
+- **initialPageParams** : 초기 페이지 설정
+- **getNextPageParams** : 다음 페이지 파라미터를 추출 함수 (없으면 다음 페이지 없음 처리)
+- **getPreviousPageParam** : 이전 페이지 파라미터 추출 함수 ( 이전 페이지 불러올 때 사용)
+- **enabled** : 쿼리 실행 여부 제어 (**false**면 자동 실행 안함)
+- **staleTime** : 데이터가 신선한 상태(최신 상태)로 여겨지는 시간 ( 이 시간 동안은 재요청 안함)
+- **cacheTime** : 데이터가 캐시에 유지되는 시간 ( 이후에 삭제됨)
+- **retry** : 실패 시 재시도 횟수 ( 기본값 3)
+- **refetchOnWindowFocus** : 다른 탭이나 앱을 갔다왔을 때 재요청 여부
+- **onSuccess** : 요청 성공 시 호출되는 콜백 함수
+- **onError** : 요청 실패 시 호출되는 콜백 함수
+
+---
+
+### pageParams
+
+- **useInfiniteQuery**가 다음 페이지 또는 이전 페이지를 요청할 때 함수 **queryFn**에 전달하는 현재 페이지 정보로 보통 페이지 번호나 커서 같은 값임
+
+**전달하는 이유?**
+
+- 서버에서 페이지 단위로 데이터를 받으려면, 몇 번째 페이지를 요청할지에 대해서 알려줘야 하기 때문임
+  예를 들어 **/posts?page=2**와 같이 URL에 페이지 번호를 넣어 요청해야 다음 데이터를 받아올 수 있음
+- 주로 **getNextPageParams**, **getPreviousPageParams**가 페이지 번호를 찾아 **queryFn**에 **pageParams**라는 이름으로 넘겨줌
+
+```jsx
+useInfiniteQuery({
+  queryKey: ["posts"],
+  queryFn: ({ pageParam = 1 }) =>
+    axios.get(`/posts?page=${pageParam}`).then((res) => res.data),
+  getNextPageParam: (lastPage, allPages) => lastPage.nextPage,
+  initialPageParam: 1,
+});
+```
