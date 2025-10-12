@@ -1,0 +1,271 @@
+---
+title: "CORS"
+date: "2025-10-12"
+tags: [TypeScript]
+image: "/thumbnails/cors.png"
+---
+
+### 교차 출처 리소스 공유(Cross-Origin Resource Sharing)
+
+- 여기서 교차 출처라는 것은 엇갈린(다른) 출처를 의미한다고 생각해도 됨\
+  브라우저가 자신의 출처가 아닌 다른 도메인으로부터 자원을 로딩하는 것을 허용 하도록 서버가 허가 해주는 **HTTP** 헤더 기반의 매커니즘임
+
+  웹 브라우저는 보안상의 이유로 같은 출처가 아닌 리소스에 요청을 기본적으로 차단함\
+  즉, **A사이트**에서 **B서버**의 **API**를 호출하려고 하면, 브라우저는 이를 교차 출처 요청으로 인식하고, **CORS** 정책에 따라 허용 또는 차단을 함
+
+        브라우저는 교차 출처 **HTTP** 요청의 위험을 완화하기 위해 **fetch()** 나 **XMLHttpRequest** 같은 **API**에서 **CORS**를 사용함
+
+- 출처 비교와 차단은 브라우저가 하며, 서버에 무언가 요청을하여 에러가 뜨면 서버 문제라고 대부분 생각함 하지만, 출처를 비교하는 로직은 서버에 구현된 스펙이 아닌 브라우저에 구현된 스펙임\
+  따라서, 서버는 잘못이 없으며 빨갛게 에러를 띄우는 것은 브라우저가 보기에 동일 출처가 아니기 때문에 띄우는 것임\
+  즉, 브라우저가 차단한 것
+
+**CORS 에러 예시**
+
+```bash
+Access to fetch at 'https://api.example.com/data'
+from origin 'http://localhost:3000' has been blocked by CORS policy
+```
+
+위 에러는 **API** 서버에서 [**localhost:3000**](http://localhost:3000)을 출처로 하는 요청을 허용하지 않았기 때문에 발생하는 흔히 자주 볼 수 있는 에러임
+
+### 출처(Origin)
+
+- 우리가 어떤 사이트에 접속할 때 인터넷 주소창에 있는 것을 URL이라고 함
+  - URL은 [**https://google.com**](https://google.com) 과 같이 하나의 문자열 같지만 여러개로 구성되어 있음
+- 출처에서 동일하다는 것은 URL구성 요소 중 아래 3가지만 동일하다면 동일 출처로 판단함
+- Origin = Protocol + Host + Port
+- 프로토콜(**http / https**)
+- 호스트 (**example.com**)
+- 포트번호 (**3000, 8080 등**)
+
+**그 외 URL 구성 요소**
+
+- Path (사이트 내부 경로)
+- Query string (요청한 **key**, **value**값)
+- Fragment (해시태그)
+
+![cors01.png](/resources/cors01.png)
+
+---
+
+### 동일 출처 정책 (Same-Origin-Policy)
+
+SOP라고 부르며 단어 그대로 동일한 출처에 대한 정책을 의미함
+즉, 동일 출처(Same-Origin) 서버에 있는 리소스는 자유롭게 가져올 수 있지만,
+다른 출처(Cross-Origin) 서버에 있는 리소스는 상호작용이 불가능함
+
+**그럼 동일 출처 정책이 왜 필요할까?**
+
+- 출처가 다른 두 애플리케이션이 자유롭게 소통 가능한 환경이라면 꽤 위험한 환경임
+  해커가 다양한 방법을 통해 우리가 만든 애플리케이션에서 이상한 코드를 심어놓고, 그 코드가 실행된다면 개인정보 같은 중요한 정보들을 가로챌 수 있음\
+  이러한 악용을 방지하기 위해 SOP정책으로 동일하지 않은 출처는 실행되지 않도록 브라우저에서 사전 방지 하는 것임
+- 같은 출처와 다른 출처를 구분할 땐, Origin의 구성 요소인 3가지만 보고 판단함
+  그 외 나머지는 다르더라도 인정하며, Origin을 구성하는 것 중에 하나라도 다를경우 브라우저는 정책상 차단하게 됨
+
+---
+
+### CORS 기본 동작 방식
+
+1. **단순 요청 (Simple Request)**
+
+   - 요청 조건이 단순할 때, 브라우저는 바로 요청을 보냄
+   - HTTP API 요청은 대부분 **text/xml** 이나 **app/json** 으로 통신하므로 **Content-Type** 이 위반되어 대부분 사전 요청으로 이루어짐
+   - 메서드: **GET** , **POST** , **HEAD** 중 하나
+   - 헤더: **Content-Type**이 다음 중 하나일 때 (아닐경우 사전 요청으로 동작됨)
+     - **application/x-www-form-urlencoded**
+     - **multipart/form-data**
+     - **text/plain**
+
+   **서버의 응답**
+
+   - 서버는 아래와 같은 **CORS** 관련 헤더를 설정해줘야 함
+   - **Access-Control-Allow-Origin**: 허용할 출처 (ex **http://localhost:3000**)
+   - **Access-Control-Allow-Methods**: 허용할 HTTP 메서드
+   - **Access-Control-Allow-Headers**: 요청에 허용할 헤더 목록
+   - **Access-Control-Allow-Credentials**: 쿠키/인증 정보를 포함한 요청을 허용할지 여부
+
+   ```scss
+   GET /resources/public-data/ HTTP/1.1
+   Host: bar.other
+   User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:71.0) Gecko/20100101 Firefox/71.0
+   Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+   Accept-Language: en-us,en;q=0.5
+   Accept-Encoding: gzip,deflate
+   Connection: keep-alive
+   Origin: https://foo.example
+   ```
+
+   브라우저가 서버로 보내는 내용이며, 아래와 같이 서버가 응답함
+
+   ```scss
+   HTTP/1.1 200 OK
+   Date: Mon, 01 Dec 2008 00:23:53 GMT
+   Server: Apache/2
+   Access-Control-Allow-Origin: *
+   Keep-Alive: timeout=2, max=100
+   Connection: Keep-Alive
+   Transfer-Encoding: chunked
+   Content-Type: application/xml
+
+   […XML Data…]
+   ```
+
+   위에서의 서버의 응답은 **Access-Control-Allow-Origin** 헤더에 모든 출처에서 해당 리소스에 접근할 수 있음을 의미하는 **Access-Control-Allow-Origin: \*** 을 반환함
+
+   ```scss
+   // 서버로 부터 응답받은 브라우저는 자신이 보낸 Origin과 비교 후 차단 여부를 결정
+   // 만약 유효하지 않다면 응답하지 않고 버림 (CORS에러)
+   Access-Control-Allow-Origin
+   ```
+
+   이러한 **Origin** 및 **Access-Control-Allow-Origin** 헤더 패턴은 접근 제어 프로토콜의 가장 간단한 사용법임. 만약 [**http://bar.other**의](http://bar.other의) 리소스 소유자가 해당 리소스의 접근을 오직 [**https://foo.example**](https://foo.example) 출처에서 오는 요청으로만 제한하길 원한다면 아래와 같이 응답을 보낼 것임.
+
+   ```scss
+   Access-Control-Allow-Origin: https://foo.example
+   ```
+
+![cors02.png](/resources/cors02.png)
+
+---
+
+1. **사전 요청 (Preflight Request)**
+
+   - 단순요청과 달리 실제 요청을 보내는 것이 안전한지 판단하기 위해 브라우저가 먼저 **OPTIONS** 메서드를 사용해 다른 출처의 리소스에 **HTTP** 요청을 보내 안전한 요청인지 확인함 이러한 교차 출처 요청은 사용자 데이터에 영향을 줄 수 있기에 서버와 잘 통신이 되는지 사전에 확인 후 전송됨
+   - 위 조건을 벗어나면 브라우저는 **GET**, **POST**가 아닌 **OPTIONS**라는 독립적인 메서드로 먼저 서버에 물어봄
+
+   ```bash
+   OPTIONS /data HTTP/1.1 # OPTIONS 메서드로 사전 요청 먼저 보냄
+   Origin: http://localhost:3000 # 자신의 출처
+   Access-Control-Request-Method: POST # 요청 방법
+   Access-Control-Request-Headers: Content-Type # 실제 요청 시 사용할 헤더
+   #해당 서버가 아래와 같은 응답 시 본 요청이 진행됨
+   ```
+
+   ```bash
+   Access-Control-Allow-Origin: http://localhost:3000
+   Access-Control-Allow-Methods: POST
+   Access-Control-Allow-Headers: Content-Type
+   ```
+
+- 사전 요청과 그에 대한 서버의 응답
+
+```bash
+# 요청 헤더
+OPTIONS /doc HTTP/1.1
+Host: bar.other
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:71.0) Gecko/20100101 Firefox/71.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-us,en;q=0.5
+Accept-Encoding: gzip,deflate
+Connection: keep-alive
+Origin: https://foo.example # 요청 헤더의 출처와
+Access-Control-Request-Method: POST # 요청 방법
+Access-Control-Request-Headers: content-type,x-pingother
+# 응답 헤더
+HTTP/1.1 204 No Content
+Date: Mon, 01 Dec 2008 01:15:39 GMT
+Server: Apache/2
+Access-Control-Allow-Origin: https://foo.example # 응답 헤더를 비교
+Access-Control-Allow-Methods: POST, GET, OPTIONS
+Access-Control-Allow-Headers: X-PINGOTHER, Content-Type
+# 브라우저 캐시를 이용해 최적화 (API호출 수 많으면 서버 요청을 배로 보내 비용적으로 부담)
+Access-Control-Max-Age: 86400 #또 다른 사전요청 보내지 않도록 얼마나 오랫동안 캐시할 수 있는지에 대한 초 단위 시간 값
+Vary: Accept-Encoding, Origin
+Keep-Alive: timeout=2, max=100
+Connection: Keep-Alive
+
+```
+
+첫번 째 블록은 **OPTIONS** 메서드를 사용한 사전 요청을 나타냄
+브라우저는 위 JS코드 스니펫에서 사용한 요청 파라미터를 기준으로 사전 요청이 필요하다고 결정함. 또한 이 사전 요청을 통해 서버는 실제 요청 파라미터로 요청을 보내는 것이 적잘한지 응답할 수 있음
+**OPTIONS** 는 서버로부터 추가 정보를 얻기 위해 사용되는 **HTTP/1.1** 메서드이며, 리소스를 변경할 수 없는 안전한 메서드임 **OPTIOINS** 와 함께 두 개의 다른 헤더가 전송됨
+
+- 사전 요청이 완료된 후 실제 요청 전송
+
+```scss
+POST /doc HTTP/1.1
+Host: bar.other
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:71.0) Gecko/20100101 Firefox/71.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-us,en;q=0.5
+Accept-Encoding: gzip,deflate
+Connection: keep-alive
+X-PINGOTHER: pingpong
+Content-Type: text/xml; charset=UTF-8
+Referer: https://foo.example/examples/preflightInvocation.html
+Content-Length: 55
+Origin: https://foo.example
+Pragma: no-cache
+Cache-Control: no-cache
+
+<person><name>Arun</name></person>
+
+HTTP/1.1 200 OK
+Date: Mon, 01 Dec 2008 01:15:40 GMT
+Server: Apache/2
+Access-Control-Allow-Origin: https://foo.example
+Vary: Accept-Encoding, Origin
+Content-Encoding: gzip
+Content-Length: 235
+Keep-Alive: timeout=2, max=99
+Connection: Keep-Alive
+Content-Type: text/plain
+
+[Some XML payload]
+```
+
+![cors03.png](/resources/cors03.png)
+
+---
+
+### 요약
+
+| CORS란?           | 다른 출처의 리소스 요청을 허용하기 위한 메커니즘        |
+| ----------------- | ------------------------------------------------------- |
+| Same-Origin       | 프로토콜 + 도메인 + 포트가 모두 같아야 함               |
+| Simple Request    | GET/POST/HEAD + 단순 헤더일 때 사전 요청 없이 바로 요청 |
+| Preflight Request | OPTIONS로 서버에 미리 물어보는 요청                     |
+| 서버 역할         | 적절한 **Access-Control-\*** 헤더 응답 필요             |
+
+**일반 요청**
+
+```scss
+클라이언트 -> 서버 요청 -> 응답
+```
+
+**단순 요청**
+
+```scss
+클라이언트 (다른 출처) → 서버 요청
+↳ 서버는 Access-Control-Allow-Origin 헤더 포함해서 응답
+↳ 브라우저가 이 응답을 보고 "허용됐는지" 확인 후 JS에 전달
+```
+
+사전 요청
+
+```scss
+클라이언트 → OPTIONS 요청 → 서버
+↳ 서버가 허용 헤더 반환 → 브라우저 확인
+↳ 브라우저가 본 요청(FETCH 등) 전송
+```
+
+---
+
+### CORS를 해결할 수 있는 방법
+
+1. **Chrome 확장 프로그램**
+
+[Allow CORS: Access-Control-Allow-Origin - Chrome Web Store](https://chromewebstore.google.com/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf)
+
+1. **프록시 사용**
+
+- 프록시(Proxy)란 클라이언트와 서버 사이에 중계 대리점과 같이 프론트에서 직접 서버에 리소스를 요청했더니 서버에서 따로 설정을 안해서 CORS에러가 뜬다면, 모든 출처를 허용한 서버대리점을 요청하면 됨 (단, 무료 프록시 서버 대여 서비스는 악용 사례 때문에 실전에서는 프록시 서버를 구축하여 사용해야함)
+
+![cors04.png](/resources/cors04.png)
+
+1. **heroku 프록시 서버**
+
+   - 아래 사이트에서 버튼을 누르고 데모 서버를 활성화 시킴 (단, 시간 제한이 있기 때문에 일시적으로만 해결됨)
+   - **Request temporary access to the demo server** 클릭하여 데모 서버 활성
+
+   [](https://cors-anywhere.herokuapp.com/corsdemo)
