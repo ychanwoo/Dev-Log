@@ -1,0 +1,182 @@
+---
+title: "상태 관리 라이브러리"
+date: "2025-10-17"
+tags: ["TypeScript"]
+image: "/thumbnails/type-inference.png"
+---
+
+### 인터페이스 재선언 (선언 병합)
+
+- 동일한 이름의 인터페이스를 중복선언
+- 기존 인터페이스에 없는 속성을 추가해서 확장함
+- 기존 속성과 중복으로 정의는 가능하지만 동일한 타입이어야 함
+
+```tsx
+interface Todo {
+  id: string;
+  title: string;
+  content: string;
+}
+
+interface Todo {
+  //Todo 인터페이스 중복 선언
+  // id: number; // 에러
+  title: string;
+  done: boolean;
+  createdAt: Date;
+}
+
+const todo: Todo = {
+  id: "1",
+  title: "할일1",
+  content: "내용1",
+  done: true,
+  createdAt: new Date(),
+};
+```
+
+### 선언 병합과 상속의 차이점?
+
+**선언 병합**은 같은 이름끼리만 작동하며 **동일한 이름의 인터페이스**를 여러 번 선언하면 TypeScript가 이를 하나로 합쳐주는 기능으로, 주로 속성을 덧붙이는 용도로 사용됨. 반면, **상속**은 **extends** 키워드를 통해 서로 **다른 이름의 인터페이스 간**에 속성과 구조를 확장하는 방식이고, 명확한 계층 구조를 만들고자 할 때 적합함 요약하자면, 선언 병합은 **‘같은 이름에 속성 추가’**, 상속은 **‘다른 이름 간 구조 확장’**이라고 생각하면 됨
+
+---
+
+## 제네릭
+
+- 타입을 나중에 결정할 수 있게 해주는 문법
+- 함수, 인터페이스, 클래스 정의에 사용
+- 제네릭 사용 시 **Type**의 앞글자인 **T**를 주로 사용함
+- 호출하는 시점에서 원하는 타입을 지정해서 사용함
+- 어떤 타입을 사용할지 모를 때 호출 시 타입을 지정하여 타입 안전을 보장함
+
+```tsx
+function echo<T>(msg: T): T {
+  //echo는 함수명일 뿐 다른걸로 대체 가능
+  return msg;
+}
+console.log(echo<string>("hello"));
+console.log(echo<number>(123));
+console.log(echo<boolean>(true));
+
+// 두 개 타입 받기
+function echoTwice<T, V>(msg1: T, msg2: V): string {
+  return `first: ${msg1}, second: ${msg2}`;
+}
+const result = echoTwice<string, number>("Hello", 123);
+console.log(result); // first: Hello, second: 123
+```
+
+### 제네릭 타입 제약
+
+- 제네릭에 전달받을 타입을 지정한 타입만 가능하도록 제약
+- 내가 사용할 타입만 정의할 때 **extends**를 이용하여 정의함
+
+**extends 키워드 사용 두 가지 방법**
+
+- `<T extends string | number>` → 유니언 타입 제약
+- `<T extends { name: string }>` → 객체 형태로 제약
+
+```tsx
+function echo<T extends string | number>(msg: T): T {
+  return msg;
+}
+const str = echo<string>("hello");
+const num = echo<number>(123.456);
+
+console.log(str.toUpperCase(), num.toFixed(2)); // HELLO 123.46
+```
+
+---
+
+## 타입 추론
+
+- 명시적으로 타입을 지정하지 않아도 코드를 해석하여 타입을 자동으로 정의
+- 할당된 값과 일치하는 타입 / 선안만 된 상태면 **any** 타입
+- 기본 데이터 타입의 변수 타입은 추론에 의지하는 것을 권장
+
+```tsx
+let name = "John"; //string 타입으로 추론
+name = 222; // 에러 발생
+
+let name2; //any로 타입 추론
+name2 = "John"; // any 타입이므로 가능
+name2 = 100; // any 타입이므로 재할당 가능
+```
+
+### **객체 타입 추론**
+
+- 객체가 초기화 될 때 속성값에 맞춰서 타입 추론
+
+```tsx
+const todo1 = {
+  id: 12, // FIXME id의 타입을 string, number 둘 다 가능하게 하고 싶음
+  title: "타입 추론",
+  content: "타입스크립트가 코드를 분석해서 적절한 타입을 자동으로 지정",
+};
+todo.done = true; // 안됨
+todo.id = "12"; // 문자열로 다시 할당하고 싶을 땐 interface 생성
+```
+
+### 리터럴 타입
+
+- 특정 **값**을 타입으로 사용함
+- string처럼 문자열 전체가 지정 가능한 타입이 아닌 \*\*John` 과 같은 특정 값을 갖도록 제한
+- 타입의 안전성을 높임
+
+```tsx
+function meeting(name: "John" | "Amy", time: 1 | 2) {
+  console.log(`${time}시간 동안 ${name}와 미팅합니다.`);
+}
+meeting("John", 1);
+meeting("Amy", 2);
+```
+
+---
+
+### 타입 호환
+
+- 한 타입이 다른 타입에 할당 가능한지 여부를 판단하는 규칙
+- 두 객체가 구조적으로 일치하는지에 따라 결정됨
+- **기본 타입 호환**
+
+  ```tsx
+  let num: number = 42;
+  let str: string = "Hello";
+
+  // 숫자는 문자열로 할당할 수 없음
+  str = num; // 오류: 타입 'number'를 'string'에 할당할 수 없음
+  ```
+
+- **객체 타입 간의 호환**
+
+  ```tsx
+  // 속성이 더 많은 타입은 더 적은 타입에 할당 가능
+  type Animal = { name: string; age: number };
+  type Dog = { name: string; age: number; breed: string };
+
+  let animal: Animal = { name: "Buddy", age: 5 };
+  let dog: Dog = { name: "Max", age: 3, breed: "Bulldog" };
+
+  // Animal 타입은 Dog 타입의 모든 속성을 포함하는 구조를 가지므로 할당 가능
+  animal = dog;
+
+  // dog의 breed라는 속성은 animal타입이 가지고 있지 않으므로 할당 안됨
+  dog = animal; // 오류: 타입 'Animal'을 'Dog'에 할당할 수 없음
+  ```
+
+- **함수 타입 간의 호환**
+
+  ```tsx
+  //객체 타입관의 호환성과 반대로 동작함
+  //매개변수가 더 적은 함수가 더 많은 함수에 할당 가능
+  type A = (x: number) => void;
+  type B = (x: number, y: string) => void;
+
+  let fnA: A = (x: number) => console.log(x);
+  let fnB: B = (x: number, y: string) => console.log(x, y);
+
+  // A 타입 함수는 B 타입 함수로 할당할 수 없음
+  fnA = fnB; // 오류: 'B' 타입은 'A' 타입에 할당할 수 없음 -> B의 매개변수가 더 많음
+
+  fnB = fnA; // fnA는 fnB에 할당할 수 있음 (매개변수 fnB > fnA)
+  ```
