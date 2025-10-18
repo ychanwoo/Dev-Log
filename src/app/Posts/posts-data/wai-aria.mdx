@@ -1,0 +1,62 @@
+---
+title: "WAI-ARIA"
+date: "2025-10-18"
+tags: ["HTML/CSS"]
+image: "/thumbnails/wcag.jpg"
+---
+
+### WAI-ARIA
+
+- Web Accessibility Initiative - Accessible Rich Internet Applications
+- RIA의 동적인 웹 어플리케이션 접근성 보장을 위한 지침 부족
+- Ajax를 통한 실시간 변경 콘텐츠를 못 읽을 수 있음
+- 페이지 콘텐츠 중 일부만 변경 시, 동일한 내용을 계속 읽어야 하는 문제 발생
+- 화면 확대 사용자 경우, 가시 범위 밖의 콘텐츠 변경 내용 알 수 없음
+- **aria-hidden** 은 역할이 아님 → 속성 아님 상태
+
+### WCAG
+
+- Web Content Accessibility Guidelines (정보 접근성) / 웹 콘텐츠 접근성 지침
+- 장애를 가진 사용자들도 웹사이트를 쉽게 이용할 수 있도록 하는 국제 표준
+- 핵심 원칙 4가지
+  - 지각 가능(Perceivable)
+  - 운용 가능(Operable)
+  - 이해 가능(Understandable)
+  - 견고성(Robust)
+
+✅ [스크린 리더 사용자를 위한 착한 마크업](https://www.youtube.com/watch?v=lmYSIiZFxPI&list=PLtaz5vK7MbK3EAPhmB2gFnCU9qU72YMq3&index=1) (참고 영상)
+
+✅ [ARIA 관련 공식 문서 참고](https://developer.mozilla.org/ko/docs/Web/Accessibility/ARIA)
+
+---
+
+### `<strong>` 태그와 `<b>` 태그의 차이점?
+
+- **`<strong>` 태그**
+  - 시맨틱(semantic) 태그로, 텍스트의 중요성(강조)을 나타냅니다.
+  - Screen Reader에서도 강조된 부분을 인식하여 강조된 음성으로 읽어줌
+  - 검색엔진(SEO)에도 영향을 미침
+- **`<b>` 태그**
+  - 단순히 스타일링(굵게 표시)만을 위한 태그
+  - 의미론적인 강조 없이, 텍스트를 시각적으로만 두껍게 만듦
+  - 화면 낭독기에서는 일반 텍스트와 동일하게 읽힘
+
+---
+
+### 반응형 이미지
+
+👇내 화면의 크기를 알려주는 사이트
+
+✅ [mydevice.io : web devices capabilities](https://www.mydevice.io/)
+
+- 픽셀 밀도 (Pixel Density):
+  - 화면에 표시되는 픽셀의 수 이며, PPI (Pixels Per Inch)로 측정 → 화면의 선명도와 해상도에 영향을 줌
+  - 고밀도 디스플레이에서는 많은 픽셀이 작은 화면 공간에 밀집하여 선명하게 보임
+  - 픽셀 밀도가 반응형 이미지를 이해하는데 필수로 필요함
+- Device Pixels (장치 픽셀):
+  - 실제 화면에서 사용되는 물리적인 픽셀을 의미함
+  - 화면 장치는 고유한 픽셀 밀도를 가지며, 이에 맞춰 이미지를 최적화해 화면에 알맞게 표시함
+- 레티나 이미지:
+  - 고해상도 화면을 의미하며, 일반적으로 2배 이상의 픽셀 밀도를 제공함
+  - 고해상도 화면에서 선명하게 보이도록 최적화된 이미지로, 표준 해상도 이미지보다 더 높은 해상도를 가진 이미지를 사용함
+  - 일반적으로 1x 해상도 이미지를 사용하지만, 레티나 디스플레이에서는 2x나 3x 해상도 이미지를 사용해 더욱 선명하고 세밀한 이미지를 제공함
